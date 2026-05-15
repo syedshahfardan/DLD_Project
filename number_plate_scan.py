@@ -2,17 +2,15 @@ import cv2
 import serial
 import time
 import base64
-import requests # Sirf ye library chahiye, jo har system pe hoti hai
+import requests
 import os
 
 # ---------- CONFIGURATION ----------
-# Aapki Mistral API Key
 MISTRAL_API_KEY = "m2iLcvTBtae0NngKi5DjrOz8VmL2WcSd"
 URL = "https://api.mistral.ai/v1/chat/completions"
 
 # ---------- ARDUINO SETUP ----------
 try:
-    # Port COM3 check kar lena (Agar Arduino connected hai)
     arduino = serial.Serial('COM3', 9600)
     time.sleep(2)
     print("Arduino Connected!")
@@ -20,11 +18,16 @@ except:
     arduino = None
     print("Arduino Not found.")
 
-# ---------- DATABASE ----------
-authorized_plates = ["ABC123", "KHI456", "LEA789", "FAR123"]
+# ---------- DYNAMIC DATABASE ----------
+# Yahan aap Miss ka number aur naam add kar sakte hain
+user_database = {
+    "ABC123": "JAWAD",
+    "KHI456": "EBAD",
+    "LEA789": "Ali",
+    "FAR123": "FARDAN"
+}
 
 # ---------- CAMERA SETUP ----------
-# IP Webcam URL
 camera = cv2.VideoCapture("http://192.168.100.5:8080/video")
 frame_count = 0
 
@@ -37,7 +40,6 @@ while True:
     cv2.imshow("Smart Parking", frame)
     frame_count += 1
 
-    # Har 60 frames baad scan
     if frame_count % 60 == 0:
         cv2.imwrite("scan.jpg", frame)
         
@@ -45,7 +47,6 @@ while True:
             with open("scan.jpg", "rb") as f:
                 img_b64 = base64.b64encode(f.read()).decode("utf-8")
 
-            # Direct API Payload (Mistral Standard)
             payload = {
                 "model": "pixtral-12b-2409",
                 "messages": [
@@ -57,7 +58,7 @@ while True:
                         ]
                     }
                 ],
-                "temperature": 0 # Accuracy ke liye 0 rakha hai
+                "temperature": 0
             }
 
             headers = {
@@ -65,7 +66,6 @@ while True:
                 "Content-Type": "application/json"
             }
 
-            # Seedha server se baat karega, kisi library ki help ke bagair
             response = requests.post(URL, json=payload, headers=headers)
             data = response.json()
 
@@ -73,20 +73,28 @@ while True:
                 plate = data["choices"][0]["message"]["content"].strip().upper().replace(" ", "")
                 print(f"Detected: {plate}")
                 
-                # Check Authorization
-                if any(auth in plate for auth in authorized_plates):
-                    print("ACCESS GRANTED")
-                    if arduino: arduino.write(b'1')
+                # Dynamic Matching Logic
+                found_user = None
+                for auth_plate, name in user_database.items():
+                    if auth_plate in plate:
+                        found_user = name
+                        break
+                
+                if found_user:
+                    print(f"ACCESS GRANTED: Welcome {found_user}")
+                    # Hum 'W' bhejenge phir naam aur end mein '\n' taake Arduino ko pata chale line khatam hui
+                    if arduino: 
+                        message = f"W{found_user}\n"
+                        arduino.write(message.encode())
                 else:
                     print("ACCESS DENIED")
-                    if arduino: arduino.write(b'0')
+                    if arduino: arduino.write(b"0\n")
             else:
                 print("API Error Response:", data)
 
         except Exception as e:
             print(f"System Error: {e}")
 
-    # 'q' dabane se stop hoga
     if cv2.waitKey(1) & 0xFF == ord('q'):
         break
 
