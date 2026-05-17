@@ -11,7 +11,7 @@ URL = "https://api.mistral.ai/v1/chat/completions"
 
 # ---------- ARDUINO SETUP ----------
 try:
-    arduino = serial.Serial('COM3', 9600)
+    arduino = serial.Serial('COM7', 9600)
     time.sleep(2)
     print("Arduino Connected!")
 except:
@@ -19,7 +19,6 @@ except:
     print("Arduino Not found.")
 
 # ---------- DYNAMIC DATABASE ----------
-# Yahan aap Miss ka number aur naam add kar sakte hain
 user_database = {
     "ABC123": "JAWAD",
     "KHI456": "EBAD",
@@ -28,7 +27,7 @@ user_database = {
 }
 
 # ---------- CAMERA SETUP ----------
-camera = cv2.VideoCapture("http://192.168.100.5:8080/video")
+camera = cv2.VideoCapture("http://192.168.100.7:8080/video")
 frame_count = 0
 
 print("System Active...")
@@ -82,13 +81,17 @@ while True:
                 
                 if found_user:
                     print(f"ACCESS GRANTED: Welcome {found_user}")
-                    # Hum 'W' bhejenge phir naam aur end mein '\n' taake Arduino ko pata chale line khatam hui
                     if arduino: 
                         message = f"W{found_user}\n"
                         arduino.write(message.encode())
+                        print("Signal sent: Gate Opening...")
+                        time.sleep(1.5)  # Motor ko ghoomne aur LEDs ko time dene ke liye gap
                 else:
                     print("ACCESS DENIED")
-                    if arduino: arduino.write(b"0\n")
+                    if arduino: 
+                        arduino.write(b"0\n")
+                        print("Signal sent: Access Denied")
+                        time.sleep(1.5)  # Loop ko thoda rokne ke liye gap taake vibration kam ho
             else:
                 print("API Error Response:", data)
 
