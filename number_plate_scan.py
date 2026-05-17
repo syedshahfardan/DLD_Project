@@ -5,11 +5,10 @@ import base64
 import requests
 import os
 
-# ---------- CONFIGURATION ----------
+
 MISTRAL_API_KEY = "m2iLcvTBtae0NngKi5DjrOz8VmL2WcSd"
 URL = "https://api.mistral.ai/v1/chat/completions"
 
-# ---------- ARDUINO SETUP ----------
 try:
     arduino = serial.Serial('COM7', 9600)
     time.sleep(2)
@@ -18,7 +17,6 @@ except:
     arduino = None
     print("Arduino Not found.")
 
-# ---------- DYNAMIC DATABASE ----------
 user_database = {
     "ABC123": "JAWAD",
     "KHI456": "EBAD",
@@ -26,8 +24,7 @@ user_database = {
     "FAR123": "FARDAN"
 }
 
-# ---------- CAMERA SETUP ----------
-camera = cv2.VideoCapture("http://192.168.100.7:8080/video")
+camera = cv2.VideoCapture("http://192.168.100.5:8080/video")
 frame_count = 0
 
 print("System Active...")
@@ -85,13 +82,13 @@ while True:
                         message = f"W{found_user}\n"
                         arduino.write(message.encode())
                         print("Signal sent: Gate Opening...")
-                        time.sleep(1.5)  # Motor ko ghoomne aur LEDs ko time dene ke liye gap
+                        time.sleep(1.5)  
                 else:
                     print("ACCESS DENIED")
                     if arduino: 
                         arduino.write(b"0\n")
                         print("Signal sent: Access Denied")
-                        time.sleep(1.5)  # Loop ko thoda rokne ke liye gap taake vibration kam ho
+                        time.sleep(1.5)  
             else:
                 print("API Error Response:", data)
 
